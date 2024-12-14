@@ -16,8 +16,8 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-from api.authentication import *
-from api.orders import *
+from api.authentication_api import *
+from api.orders_api import *
 
 if __name__ == '__main__':
     uvicorn.run(app, host="0.0.0.0", port=5000)

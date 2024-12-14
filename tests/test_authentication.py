@@ -26,7 +26,7 @@ class TestAuthentication:
             "/auth/create_token",
             json={"email": "test@example.com", "password": "securepassword123"}
         )
-        assert response.status_code == 200
+        assert response.status_code == 201
         assert response.json()["success"] is True
         assert "access_token" in response.json()["data"]
 

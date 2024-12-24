@@ -1,5 +1,6 @@
 import pytest
-from shared.tests.fixtures import client, create_test_user
+from shared.tests.fixtures import client
+from fixtures import create_test_user
 
 
 class TestUser:

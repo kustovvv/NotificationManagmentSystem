@@ -1,21 +1,28 @@
 from fastapi import Request, HTTPException
 from dotenv import load_dotenv
 
-from shared.api.utilities_api import standard_response
+from shared.api.utilities_api import standard_response, decode_jwt_token
+from shared.kafka.kafka_clients import ProductServiceClient
 from .order_service import OrderService
+from .order_db import OrdersDBClient
 from .app import app
 
 load_dotenv()
+order_db_client = OrdersDBClient()
+product_service_client = ProductServiceClient()
 
-@app.post("/orders/create")
+
+@app.post("/create")
 async def create_order(request: Request):
     try:
-        user_id = request.headers.get("X-User-ID")
-        if not user_id:
-            return standard_response(success=False, message="Unauthorized: User ID missing", status_code=401)
-
-        data = await request.json()
+        jwt_token = request.headers.get('authorization')
+        if not jwt_token:
+            raise HTTPException(status_code=401, detail="Token not provided")
+            
+        user_id = await decode_jwt_token(jwt_token)
+        
         order_service = OrderService()
+        data = await request.json()
         await order_service.create_order(user_id, data)
         return standard_response(success=True, message="Order created successfully", status_code=201)
     except HTTPException as e:

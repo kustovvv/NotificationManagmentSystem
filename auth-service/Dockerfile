@@ -5,7 +5,6 @@ WORKDIR /app
 COPY shared /app/shared
 COPY auth-service/app /app/app
 COPY auth-service/requirements.txt .
-COPY auth-service/.env .
 
 RUN pip install --no-cache-dir -r requirements.txt
 

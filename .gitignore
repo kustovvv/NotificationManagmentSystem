@@ -1,0 +1,5 @@
+auth-service/.env
+.idea/
+__pycache__/
+venv/
+virt/

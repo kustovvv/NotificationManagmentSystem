@@ -1,79 +1,52 @@
 _format_version: "3.0"
 _transform: true
 
+consumers:
+  - username: frontend-app
+    jwt_secrets:
+      - key: "123456789"
+        algorithm: "HS256"
+        secret: "lsdlafkjadskjflaskjfj3i2f203j8wopesdj"
+
 services:
   - name: auth-service
-    url: http://auth-service:5001/auth
+    url: http://auth-service:5001
+    connect_timeout: 5000
+    write_timeout: 10000
+    read_timeout: 10000
     routes:
       - name: auth-route
         paths:
           - /api/auth
         strip_path: true
-        preserve_host: true
-    plugins:
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-          headers:
-            - Accept
-            - Authorization
-            - Content-Type
-          exposed_headers:
-            - X-Auth-Token
-          credentials: true
-          max_age: 3600
 
   - name: user-service
-    url: http://user-service:5002/users
+    url: http://user-service:5002
     routes:
       - name: user-route
         paths:
           - /api/users
         strip_path: true
-        preserve_host: true
-    plugins:
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-          headers:
-            - Accept
-            - Authorization
-            - Content-Type
 
   - name: product-service
     url: http://product-service:5003
+    connect_timeout: 5000
+    write_timeout: 10000
+    read_timeout: 10000
     routes:
       - name: product-route
         paths:
           - /api/products
         strip_path: true
-        preserve_host: true
     plugins:
-      - name: cors
+      - name: jwt
         config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-          headers:
-            - Accept
-            - Authorization
-            - Content-Type
+          secret_is_base64: false
+          claims_to_verify:
+            - exp
+          key_claim_name: kid
+          anonymous: null
+          run_on_preflight: true
 
   - name: order-service
     url: http://order-service:5004
@@ -82,18 +55,12 @@ services:
         paths:
           - /api/orders
         strip_path: true
-        preserve_host: true
     plugins:
-      - name: cors
+      - name: jwt
         config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-          headers:
-            - Accept
-            - Authorization
-            - Content-Type
+          secret_is_base64: false
+          claims_to_verify:
+            - exp
+          key_claim_name: kid
+          anonymous: null
+          run_on_preflight: true

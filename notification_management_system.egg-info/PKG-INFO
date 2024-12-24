@@ -1,0 +1,6 @@
+Metadata-Version: 2.1
+Name: notification-management-system
+Version: 0.1
+Requires-Dist: fastapi
+Requires-Dist: pytest
+Requires-Dist: pytest-asyncio

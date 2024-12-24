@@ -1,20 +1,22 @@
 from fastapi import Request, HTTPException
 from dotenv import load_dotenv
 
-from shared.api.utilities_api import standard_response
+from shared.api.utilities_api import standard_response, decode_jwt_token
 from .product_db import ProductsDBClient
 from .app import app
 
 load_dotenv()
 product_db_client = ProductsDBClient()
 
-@app.get("/products/{product_id}")
-async def create_order(request: Request, product_id: int):
+@app.get("/{product_id}")
+async def get_product(request: Request, product_id: int):
     try:
-        user_id = request.headers.get("X-User-ID")
-        if not user_id:
-            return standard_response(success=False, message="Unauthorized: User ID missing", status_code=401)
-
+        jwt_token = request.headers.get('authorization')
+        if not jwt_token:
+            raise HTTPException(status_code=401, detail="Token not provided")
+            
+        user_id = await decode_jwt_token(jwt_token)
+        print('user_id: ', user_id)
         product = product_db_client.get_product(product_id)
         return {"id": product[0], "category_id": product[1], "name": product[2], "is_in_stock": product[3], "price": product[4]}
     except HTTPException as e:

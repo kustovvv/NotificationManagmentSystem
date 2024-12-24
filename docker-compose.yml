@@ -1,6 +1,38 @@
 version: '3.8'
 
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092, PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+
   kong:
     image: kong:latest
     container_name: kong
@@ -22,68 +54,30 @@ services:
     restart: always
     networks:
       - app-network
-    healthcheck:  # Add healthcheck
+    healthcheck:
       test: ["CMD", "kong", "health"]
       interval: 10s
       timeout: 10s
       retries: 3
-
-  users-db:
-    image: postgres:13
-    container_name: users-db
-    environment:
-      POSTGRES_DB: users_service_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: zegorov_319783111
-    ports:
-      - "5435:5432"
-    volumes:
-      - users_data:/var/lib/postgresql/data
-      - ./user-service/app/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - app-network
-
-  orders-db:
-    image: postgres:13
-    container_name: orders-db
-    environment:
-      POSTGRES_DB: orders_service_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: zegorov_319783111
-    ports:
-      - "5436:5432"
-    volumes:
-      - orders_data:/var/lib/postgresql/data
-      - ./order-service/app/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - app-network
-
-  products-db:
-    image: postgres:13
-    container_name: products-db
-    environment:
-      POSTGRES_DB: products_service_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: zegorov_319783111
-    ports:
-      - "5437:5432"
-    volumes:
-      - products_data:/var/lib/postgresql/data
-      - ./product-service/app/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - app-network
+    depends_on:
+      - product-service
+      - auth-service
+      - user-service
+      - order-service
 
   auth-service:
     build:
       context: .
       dockerfile: ./auth-service/Dockerfile
     container_name: auth-service
+    env_file:
+      - ./auth-service/.env
     ports:
       - "5006:5001"
     networks:
       - app-network
     depends_on:
-      - user-service
+      - kafka
 
   user-service:
     build:
@@ -91,17 +85,17 @@ services:
       dockerfile: ./user-service/Dockerfile
     container_name: user-service
     environment:
-      DB_NAME: users_service_db
-      DB_USER: postgres
-      DB_PASSWORD: zegorov_319783111
-      DB_HOST: users-db
-      DB_PORT: 5432
+      DB_HOST: host.docker.internal
+    env_file:
+      - ./user-service/.env
     ports:
       - "5007:5002"
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
-      - users-db
+      - kafka
 
   product-service:
     build:
@@ -109,17 +103,17 @@ services:
       dockerfile: ./product-service/Dockerfile
     container_name: product-service
     environment:
-      DB_NAME: products_service_db
-      DB_USER: postgres
-      DB_PASSWORD: zegorov_319783111
-      DB_HOST: products-db
-      DB_PORT: 5432
+      DB_HOST: host.docker.internal
+    env_file:
+      - ./product-service/.env
     ports:
-      - "5008:5003"  # Changed port
+      - "5008:5003"
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
-      - products-db
+      - kafka
 
   order-service:
     build:
@@ -127,22 +121,17 @@ services:
       dockerfile: ./order-service/Dockerfile
     container_name: order-service
     environment:
-      DB_NAME: orders_service_db
-      DB_USER: postgres
-      DB_PASSWORD: zegorov_319783111
-      DB_HOST: orders-db
-      DB_PORT: 5432
+      DB_HOST: host.docker.internal
+    env_file:
+      - ./order-service/.env
     ports:
-      - "5009:5004"  # Changed port
+      - "5009:5004"
     networks:
       - app-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
-      - orders-db
-
-volumes:
-  users_data:
-  orders_data:
-  products_data:
+      - kafka
 
 networks:
   app-network:

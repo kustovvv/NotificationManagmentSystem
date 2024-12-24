@@ -1,0 +1,5 @@
+auth-service
+order-service
+product-service
+shared
+user-service

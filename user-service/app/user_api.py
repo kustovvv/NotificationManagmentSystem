@@ -9,7 +9,7 @@ load_dotenv()
 user_service = UserService()
 
 
-@app.post("/users/get_user")
+@app.post("/get_user")
 async def get_user(request: Request):
     try:
         data = await request.json()
@@ -19,7 +19,7 @@ async def get_user(request: Request):
         return standard_response(success=False, message=e.detail, status_code=e.status_code)
 
 
-@app.post("/users/create_user")
+@app.post("/create_user")
 async def create_user(request: Request):
     try:
         data = await request.json()

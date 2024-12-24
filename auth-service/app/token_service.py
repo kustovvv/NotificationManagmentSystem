@@ -10,14 +10,17 @@ load_dotenv()
 
 class Token:
     def __init__(self):
-        self.__secret_key = os.getenv('SECRET_KEY')
-        self.__encode_algorithm = os.getenv('ENCODE_ALGORITHM')
+        self.__secret_key = os.getenv('JWT_SECRET')
+        self.__encode_algorithm = os.getenv('JWT_ALGORITHM')
+        self.__key = os.getenv('JWT_KEY')
+        self.__iss = os.getenv('JWT_ISS')
         self.__token_expire_time = 15 * 60 # 15 minutes
 
     def create_token(self, user_id):
         try:
-            expires = datetime.utcnow() + timedelta(seconds=self.__token_expire_time)
-            token = jwt.encode(claims={'user_id': user_id, 'exp': expires}, key=self.__secret_key, algorithm=self.__encode_algorithm)
+            headers = {}
+            payload = {"kid": self.__key, 'user_id': user_id, 'exp': datetime.utcnow() + timedelta(seconds=self.__token_expire_time), "iss": self.__iss}
+            token = jwt.encode(headers=headers, claims=payload, key=self.__secret_key, algorithm=self.__encode_algorithm)
             return token
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Token creation failed: {str(e)}")

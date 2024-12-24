@@ -1,24 +1,24 @@
 from fastapi import Request, HTTPException
 from dotenv import load_dotenv
 
-from .auth_service import AuthService, logger
+from .auth_service import AuthService
 from shared.api.utilities_api import standard_response
 from .app import app
 
 load_dotenv()
 auth_service = AuthService()
 
-@app.post("/auth/decode_token")
+@app.post("/decode_token")
 async def decode_token(request: Request):
     try:
         data = await request.json()
-        user_id = auth_service.decode_token(data.get('jwt_token'))
-        return user_id
+        user_id = await auth_service.decode_token(data.get('jwt_token'))
+        return standard_response(success=True, message="Token decoded successfully", data={"user_id": user_id})
     except HTTPException as e:
         return standard_response(success=False, message=e.detail, status_code=e.status_code)
 
 
-@app.post("/auth/create_token")
+@app.post("/create_token")
 async def create_token(request: Request):
     try:
         data = await request.json()

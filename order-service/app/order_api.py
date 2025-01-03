@@ -15,14 +15,11 @@ product_service_client = ProductServiceClient()
 @app.post("/create")
 async def create_order(request: Request):
     try:
-        jwt_token = request.headers.get('authorization')
-        if not jwt_token:
-            raise HTTPException(status_code=401, detail="Token not provided")
-            
+        data = await request.json()
+        jwt_token = request.headers.get('authorization')            
         user_id = await decode_jwt_token(jwt_token)
         
-        order_service = OrderService()
-        data = await request.json()
+        order_service = OrderService(product_service_client, order_db_client)
         await order_service.create_order(user_id, data)
         return standard_response(success=True, message="Order created successfully", status_code=201)
     except HTTPException as e:

@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Optional, AsyncIterator, Callable
+from typing import Any, Optional
 from uuid import uuid4
 from aiokafka import AIOKafkaConsumer
 from fastapi import HTTPException
@@ -14,8 +14,7 @@ class KafkaConsumer:
         self.group_id = group_id or f"{kafka_settings.DEFAULT_GROUP_ID}-{uuid4()}"
         self.consumer: Optional[AIOKafkaConsumer] = None
 
-    async def consume_messages(self, topic: str, timeout: float = kafka_settings.RESPONSE_TIMEOUT, 
-                               filter_func: Optional[Callable[[Any], bool]] = None) -> AsyncIterator[Any, None]:
+    async def consume_messages(self, topic: str, timeout: float = kafka_settings.RESPONSE_TIMEOUT, filter_func = None):
         try:
             await self.initialize(topic)
 

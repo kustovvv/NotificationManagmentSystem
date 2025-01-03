@@ -43,7 +43,7 @@ class OrderService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Order data update failed: {str(e)}")
         finally:
-            self.product_service_client.cleanup()
+            await self.product_service_client.cleanup()
 
     async def get_product_data(self, user_id, product_id):
         return await self.product_service_client.get_product_data(user_id, product_id)

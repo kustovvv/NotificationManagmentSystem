@@ -15,19 +15,18 @@ class OrdersDBClient:
                                                   db_port=self.db_port, db_user=self.db_user, db_password=self.db_password)
 
     @db_connection
-    def add_order_with_items(self, conn, cursor, user_id, status, total_price, creation_date, update_date, order_data):
+    def add_order_with_items(self, conn, cursor, user_id, status, total_price, order_data):
         try:
             # Add order
-            order = self.add_order(conn=conn, cursor=cursor, user_id=user_id, status=status,
-                                   total_price=total_price, creation_date=creation_date, update_date=update_date)
+            order = self.add_order(conn=conn, cursor=cursor, user_id=user_id, status=status, total_price=total_price)
             order_id = order[0]
             conn.commit()
 
             # Add items associated with the order
             total_price = 0
             for item in order_data:
-                self.add_order_item(order_id, item.get('product_id'), item.get('amount'), item.get('price'))
-                total_price += item.get('price') * item.get('amount')
+                self.add_order_item(order_id, item.get('product_id'), item.get('quantity'), item.get('price'))
+                total_price += item.get('price') * item.get('quantity')
             conn.commit()
 
             self.update_order_total_price(conn=conn, cursor=cursor, order_id=order_id, total_price=total_price)
@@ -38,17 +37,18 @@ class OrdersDBClient:
             raise e
 
     @db_connection
-    def add_order(self, conn, cursor, user_id, status, total_price, creation_date, update_date):
-        cursor.execute("INSERT INTO public.orders (user_id, status, total_price, creation_date, update_date) "
-                       "VALUES (%s, %s, %s, %s, %s)"
+    def add_order(self, conn, cursor, user_id, status, total_price):
+        cursor.execute("INSERT INTO public.orders (user_id, status, total_price) "
+                       "VALUES (%s, %s, %s)"
                        "RETURNING id;",
-                       (user_id, status, total_price, creation_date, update_date))
+                       (user_id, status, total_price))
         return cursor.fetchone()
 
     @db_connection
-    def add_order_item(self, conn, cursor, order_id, product_id, amount, price):
-        cursor.execute("INSERT INTO public.order_items (order_id, product_id, amount, price) VALUES (%s, %s, %s, %s)",
-                       (order_id, product_id, amount, price))
+    def add_order_item(self, conn, cursor, order_id, product_id, quantity, price):
+        print('order_id, product_id, amount, price: ', order_id, product_id, quantity, price)
+        cursor.execute("INSERT INTO public.order_items (order_id, product_id, quantity, price) VALUES (%s, %s, %s, %s)",
+                       (order_id, product_id, quantity, price))
 
     @db_connection
     def get_order_items(self, conn, cursor, order_id):

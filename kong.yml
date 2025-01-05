@@ -64,3 +64,12 @@ services:
           key_claim_name: kid
           anonymous: null
           run_on_preflight: true
+
+plugins:
+  - name: prometheus
+    protocols: ["http", "https"]
+    config:
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
